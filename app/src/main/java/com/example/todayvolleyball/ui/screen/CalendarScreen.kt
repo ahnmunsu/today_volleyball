@@ -1,7 +1,6 @@
 package com.example.todayvolleyball.ui.screen
 
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,8 +12,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +37,7 @@ import com.example.todayvolleyball.ui.theme.WomenWinColor
 import com.example.todayvolleyball.util.KoreanHolidays
 import io.github.boguszpawlowski.composecalendar.SelectableWeekCalendar
 import io.github.boguszpawlowski.composecalendar.rememberSelectableWeekCalendarState
+import io.github.boguszpawlowski.composecalendar.week.Week
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -53,6 +55,7 @@ fun CalendarScreen(
 ) {
     val schedules by viewModel.schedules.collectAsState()
     val scheduledAlarms by viewModel.scheduledAlarms.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     
     // DataStore에 저장된 필터 상태 연동 (앱 재시작 시에도 유지)
     val selectedLeague by viewModel.savedLeagueFilter.collectAsState()
@@ -121,372 +124,400 @@ fun CalendarScreen(
 
     val context = LocalContext.current
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 최상단 "오늘의 배구" 로고 및 타이틀 (터치 시 오늘 날짜로 즉시 이동)
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable {
-                        val today = LocalDate.now()
-                        val targetYm = YearMonth.from(today)
-                        var week = calendarState.weekState.currentWeek
-                        if (week.yearMonth < targetYm) {
-                            while (week.yearMonth < targetYm) {
-                                week = week.inc()
-                            }
-                        } else if (week.yearMonth > targetYm) {
-                            while (week.yearMonth > targetYm) {
-                                week = week.dec()
-                            }
-                        }
-                        calendarState.weekState.currentWeek = week
-                        calendarState.selectionState.onDateSelected(today)
-                        Toast.makeText(context, "오늘 날짜로 이동했습니다.", Toast.LENGTH_SHORT).show()
-                    }
-                    .padding(vertical = 4.dp, horizontal = 4.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_volleyball),
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = Color.Unspecified
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "오늘의 배구", 
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            IconButton(onClick = onNavigateToSettings) {
-                Icon(Icons.Default.Settings, contentDescription = "Settings")
-            }
-        }
-
-        // 주간 달력 (기본 헤더를 커스텀 월 이동 컨트롤러로 오버라이드하여 단 하나만 표시)
-        SelectableWeekCalendar(
-            calendarState = calendarState,
-            modifier = Modifier.padding(horizontal = 4.dp),
-            weekHeader = { weekState ->
-                val currentYearMonth = weekState.currentWeek.yearMonth
-                val yearMonthText = "${currentYearMonth.year}년 ${currentYearMonth.monthValue}월"
-
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            viewModel.refreshData()
+            Toast.makeText(context, "최신 리그 정보를 수동으로 동기화합니다.", Toast.LENGTH_SHORT).show()
+        },
+        modifier = Modifier.fillMaxSize()
+    ) {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 2.dp),
-                    horizontalArrangement = Arrangement.Center,
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
-                        onClick = {
-                            val targetYm = currentYearMonth.minusMonths(1)
-                            var week = weekState.currentWeek
-                            while (week.yearMonth > targetYm) {
-                                week = week.dec()
+                    // 최상단 "오늘의 배구" 로고 및 타이틀 (터치 시 오늘 날짜로 즉시 이동)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                val today = LocalDate.now()
+                                calendarState.weekState.currentWeek = Week.now()
+                                calendarState.selectionState.onDateSelected(today)
+                                Toast.makeText(context, "오늘 날짜로 이동했습니다.", Toast.LENGTH_SHORT).show()
                             }
-                            weekState.currentWeek = week
-                        }
+                            .padding(vertical = 4.dp, horizontal = 4.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "이전 달"
+                            painter = painterResource(id = R.drawable.ic_volleyball),
+                            contentDescription = null,
+                            modifier = Modifier.size(28.dp),
+                            tint = Color.Unspecified
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "오늘의 배구", 
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
                         )
                     }
 
-                    Text(
-                        text = yearMonthText,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp)
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
+                }
+            }
+
+            item {
+                // 주간 달력 (기본 헤더를 커스텀 월 이동 컨트롤러로 오버라이드하여 단 하나만 표시)
+                SelectableWeekCalendar(
+                    calendarState = calendarState,
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                    weekHeader = { weekState ->
+                        val currentYearMonth = weekState.currentWeek.yearMonth
+                        val yearMonthText = "${currentYearMonth.year}년 ${currentYearMonth.monthValue}월"
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 2.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    weekState.currentWeek = weekState.currentWeek.minusWeeks(4)
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                    contentDescription = "이전 달"
+                                )
+                            }
+
+                            Text(
+                                text = yearMonthText,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+
+                            IconButton(
+                                onClick = {
+                                    weekState.currentWeek = weekState.currentWeek.plusWeeks(4)
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    contentDescription = "다음 달"
+                                )
+                            }
+                        }
+                    },
+                    dayContent = { dayState ->
+                        val date = dayState.date
+                        val isSelected = calendarState.selectionState.selection.contains(date)
+                        val isToday = dayState.isCurrentDay || date == LocalDate.now()
+
+                        // 달력 셀 내부 경기들 중 여자부(isMen = false) 경기를 위로 배치!
+                        val matches = schedules.filter { 
+                            LocalDate.parse(it.date) == date && isScheduleMatchingFilter(it) 
+                        }.sortedBy { it.isMen }
+                        
+                        // 공휴일(일요일 포함) = 빨간색, 토요일 = 파란색
+                        val dateTextColor = when {
+                            KoreanHolidays.isHoliday(date) -> Color(0xFFE53935)
+                            KoreanHolidays.isSaturday(date) -> Color(0xFF1E88E5)
+                            isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
+                            else -> MaterialTheme.colorScheme.onSurface
+                        }
+
+                        val cellShape = RoundedCornerShape(8.dp)
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(2.dp)
+                                .then(
+                                    if (isToday) {
+                                        Modifier.border(2.dp, MaterialTheme.colorScheme.primary, cellShape)
+                                    } else {
+                                        Modifier
+                                    }
+                                )
+                                .background(
+                                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                                    shape = cellShape
+                                )
+                                .clip(cellShape)
+                                .clickable { calendarState.selectionState.onDateSelected(date) }
+                                .padding(vertical = 4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = date.dayOfMonth.toString(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
+                                color = dateTextColor
+                            )
+                            
+                            matches.forEach { match ->
+                                Spacer(modifier = Modifier.height(2.dp))
+                                
+                                val homeColor = if (match.isFinished) {
+                                    if (match.homePoint > match.awayPoint) (if (match.isMen) MenWinColor else WomenWinColor)
+                                    else (if (match.isMen) MenLoseColor else WomenLoseColor)
+                                } else MaterialTheme.colorScheme.onSurface
+                                
+                                val awayColor = if (match.isFinished) {
+                                    if (match.awayPoint > match.homePoint) (if (match.isMen) MenWinColor else WomenWinColor)
+                                    else (if (match.isMen) MenLoseColor else WomenLoseColor)
+                                } else MaterialTheme.colorScheme.onSurface
+
+                                // 팀명 (배경색 = 팀 컬러, 모든 팀 컴팩트 고정 크기 20.dp)
+                                Row(
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Surface(
+                                        color = parseHexColor(match.homeTeamColor),
+                                        shape = RoundedCornerShape(2.dp),
+                                        modifier = Modifier.width(20.dp)
+                                    ) {
+                                        Text(
+                                            text = match.homeTeamShortName,
+                                            color = Color.White,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 1,
+                                            modifier = Modifier.padding(vertical = 1.dp)
+                                        )
+                                    }
+                                    Text(text = ":", fontSize = 9.sp, modifier = Modifier.padding(horizontal = 1.dp))
+                                    Surface(
+                                        color = parseHexColor(match.awayTeamColor),
+                                        shape = RoundedCornerShape(2.dp),
+                                        modifier = Modifier.width(20.dp)
+                                    ) {
+                                        Text(
+                                            text = match.awayTeamShortName,
+                                            color = Color.White,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 1,
+                                            modifier = Modifier.padding(vertical = 1.dp)
+                                        )
+                                    }
+                                }
+                                // 세트 점수
+                                Row(
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = "${match.homePoint}", color = homeColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    Text(text = " : ", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    Text(text = "${match.awayPoint}", color = awayColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
+            item {
+                // 1. 리그 필터 (전체 -> 여자부 -> 남자부 순서)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = selectedLeague == "ALL",
+                        onClick = { viewModel.updateLeagueFilter("ALL") },
+                        label = { Text("전체") }
                     )
-
-                    IconButton(
-                        onClick = {
-                            val targetYm = currentYearMonth.plusMonths(1)
-                            var week = weekState.currentWeek
-                            while (week.yearMonth < targetYm) {
-                                week = week.inc()
-                            }
-                            weekState.currentWeek = week
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = "다음 달"
-                        )
-                    }
+                    FilterChip(
+                        selected = selectedLeague == "WOMEN",
+                        onClick = { viewModel.updateLeagueFilter("WOMEN") },
+                        label = { Text("여자부") }
+                    )
+                    FilterChip(
+                        selected = selectedLeague == "MEN",
+                        onClick = { viewModel.updateLeagueFilter("MEN") },
+                        label = { Text("남자부") }
+                    )
                 }
-            },
-            dayContent = { dayState ->
-                val date = dayState.date
-                val isSelected = calendarState.selectionState.selection.contains(date)
-                val isToday = date == LocalDate.now()
+            }
 
-                // 달력 셀 내부 경기들 중 여자부(isMen = false) 경기를 위로 배치!
-                val matches = schedules.filter { 
-                    LocalDate.parse(it.date) == date && isScheduleMatchingFilter(it) 
-                }.sortedBy { it.isMen }
-                
-                // 공휴일(일요일 포함) = 빨간색, 토요일 = 파란색
-                val dateTextColor = when {
-                    KoreanHolidays.isHoliday(date) -> Color(0xFFE53935)
-                    KoreanHolidays.isSaturday(date) -> Color(0xFF1E88E5)
-                    isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
-                    else -> MaterialTheme.colorScheme.onSurface
-                }
-
+            item {
+                // 2. 팀별 필터 (정렬된 2줄 8컬럼 동일 크기 격자)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(2.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .border(
-                            border = if (isToday) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else BorderStroke(0.dp, Color.Transparent),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
-                        .clickable { calendarState.selectionState.onDateSelected(date) }
-                        .padding(vertical = 4.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text(
-                        text = date.dayOfMonth.toString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
-                        color = dateTextColor
-                    )
-                    
-                    matches.forEach { match ->
-                        Spacer(modifier = Modifier.height(2.dp))
-                        
-                        val homeColor = if (match.isFinished) {
-                            if (match.homePoint > match.awayPoint) (if (match.isMen) MenWinColor else WomenWinColor)
-                            else (if (match.isMen) MenLoseColor else WomenLoseColor)
-                        } else MaterialTheme.colorScheme.onSurface
-                        
-                        val awayColor = if (match.isFinished) {
-                            if (match.awayPoint > match.homePoint) (if (match.isMen) MenWinColor else WomenWinColor)
-                            else (if (match.isMen) MenLoseColor else WomenLoseColor)
-                        } else MaterialTheme.colorScheme.onSurface
-
-                        // 팀명 (배경색 = 팀 컬러, 모든 팀 컴팩트 고정 크기 20.dp)
+                    // 1줄 (상단): [전체] + 여자부 7개 팀
+                    if (selectedLeague == "ALL" || selectedLeague == "WOMEN") {
                         Row(
-                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(3.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            // Column 0: 전체 팀 선택 버튼
                             Surface(
-                                color = parseHexColor(match.homeTeamColor),
-                                shape = RoundedCornerShape(2.dp),
-                                modifier = Modifier.width(20.dp)
+                                color = if (selectedTeam == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                shape = RoundedCornerShape(6.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(30.dp)
+                                    .clickable { viewModel.updateTeamFilter(null) }
                             ) {
-                                Text(
-                                    text = match.homeTeamShortName,
-                                    color = Color.White,
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center,
-                                    maxLines = 1,
-                                    modifier = Modifier.padding(vertical = 1.dp)
-                                )
+                                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                    Text(
+                                        text = "전체",
+                                        color = if (selectedTeam == null) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontSize = 10.sp,
+                                        fontWeight = if (selectedTeam == null) FontWeight.Bold else FontWeight.Normal,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
                             }
-                            Text(text = ":", fontSize = 9.sp, modifier = Modifier.padding(horizontal = 1.dp))
-                            Surface(
-                                color = parseHexColor(match.awayTeamColor),
-                                shape = RoundedCornerShape(2.dp),
-                                modifier = Modifier.width(20.dp)
-                            ) {
-                                Text(
-                                    text = match.awayTeamShortName,
-                                    color = Color.White,
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center,
-                                    maxLines = 1,
-                                    modifier = Modifier.padding(vertical = 1.dp)
+
+                            // Column 1~7: 여자부 팀 7개
+                            womenTeams.forEach { team ->
+                                val isSelected = selectedTeam == team.name
+                                TeamChip(
+                                    name = team.name,
+                                    colorHex = team.colorHex,
+                                    isSelected = isSelected,
+                                    onClick = {
+                                        viewModel.updateTeamFilter(if (isSelected) null else team.name)
+                                    },
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
                         }
-                        // 세트 점수
+                    }
+
+                    // 2줄 (하단): [정렬용 빈칸/전체] + 남자부 7개 팀
+                    if (selectedLeague == "ALL" || selectedLeague == "MEN") {
                         Row(
-                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(3.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "${match.homePoint}", color = homeColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            Text(text = " : ", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            Text(text = "${match.awayPoint}", color = awayColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            if (selectedLeague == "ALL") {
+                                // Column 0: 빈 공간 (상단 [전체] 버튼과 세로 정렬 축 맞춤)
+                                Spacer(modifier = Modifier.weight(1f))
+                            } else {
+                                // 남자부 필터만 선택 시 Column 0에 [전체] 버튼 배치
+                                Surface(
+                                    color = if (selectedTeam == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                    shape = RoundedCornerShape(6.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(30.dp)
+                                        .clickable { viewModel.updateTeamFilter(null) }
+                                ) {
+                                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                        Text(
+                                            text = "전체",
+                                            color = if (selectedTeam == null) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            fontSize = 10.sp,
+                                            fontWeight = if (selectedTeam == null) FontWeight.Bold else FontWeight.Normal,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Column 1~7: 남자부 팀 7개
+                            menTeams.forEach { team ->
+                                val isSelected = selectedTeam == team.name
+                                TeamChip(
+                                    name = team.name,
+                                    colorHex = team.colorHex,
+                                    isSelected = isSelected,
+                                    onClick = {
+                                        viewModel.updateTeamFilter(if (isSelected) null else team.name)
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
                     }
                 }
             }
-        )
-        
-        Spacer(modifier = Modifier.height(10.dp))
 
-        // 1. 리그 필터 (전체 -> 여자부 -> 남자부 순서)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FilterChip(
-                selected = selectedLeague == "ALL",
-                onClick = { viewModel.updateLeagueFilter("ALL") },
-                label = { Text("전체") }
-            )
-            FilterChip(
-                selected = selectedLeague == "WOMEN",
-                onClick = { viewModel.updateLeagueFilter("WOMEN") },
-                label = { Text("여자부") }
-            )
-            FilterChip(
-                selected = selectedLeague == "MEN",
-                onClick = { viewModel.updateLeagueFilter("MEN") },
-                label = { Text("남자부") }
-            )
-        }
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
-        // 2. 팀별 필터 (정렬된 2줄 8컬럼 동일 크기 격자)
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            // 1줄 (상단): [전체] + 여자부 7개 팀
-            if (selectedLeague == "ALL" || selectedLeague == "WOMEN") {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(3.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Column 0: 전체 팀 선택 버튼
-                    Surface(
-                        color = if (selectedTeam == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(6.dp),
+            // 필터링된 스케줄 리스트
+            if (filteredSchedules.isEmpty()) {
+                item {
+                    Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .height(30.dp)
-                            .clickable { viewModel.updateTeamFilter(null) }
+                            .fillMaxWidth()
+                            .padding(vertical = 40.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                            Text(
-                                text = "전체",
-                                color = if (selectedTeam == null) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 10.sp,
-                                fontWeight = if (selectedTeam == null) FontWeight.Bold else FontWeight.Normal,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-
-                    // Column 1~7: 여자부 팀 7개
-                    womenTeams.forEach { team ->
-                        val isSelected = selectedTeam == team.name
-                        TeamChip(
-                            name = team.name,
-                            colorHex = team.colorHex,
-                            isSelected = isSelected,
-                            onClick = {
-                                viewModel.updateTeamFilter(if (isSelected) null else team.name)
-                            },
-                            modifier = Modifier.weight(1f)
+                        Text(
+                            text = "이 날은 예정된 경기가 없습니다.",
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
-            }
-
-            // 2줄 (하단): [정렬용 빈칸/전체] + 남자부 7개 팀
-            if (selectedLeague == "ALL" || selectedLeague == "MEN") {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(3.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (selectedLeague == "ALL") {
-                        // Column 0: 빈 공간 (상단 [전체] 버튼과 세로 정렬 축 맞춤)
-                        Spacer(modifier = Modifier.weight(1f))
-                    } else {
-                        // 남자부 필터만 선택 시 Column 0에 [전체] 버튼 배치
-                        Surface(
-                            color = if (selectedTeam == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                            shape = RoundedCornerShape(6.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(30.dp)
-                                .clickable { viewModel.updateTeamFilter(null) }
-                        ) {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                Text(
-                                    text = "전체",
-                                    color = if (selectedTeam == null) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 10.sp,
-                                    fontWeight = if (selectedTeam == null) FontWeight.Bold else FontWeight.Normal,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-                    }
-
-                    // Column 1~7: 남자부 팀 7개
-                    menTeams.forEach { team ->
-                        val isSelected = selectedTeam == team.name
-                        TeamChip(
-                            name = team.name,
-                            colorHex = team.colorHex,
-                            isSelected = isSelected,
-                            onClick = {
-                                viewModel.updateTeamFilter(if (isSelected) null else team.name)
-                            },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // 필터링된 스케줄 리스트
-        if (filteredSchedules.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "이 날은 예정된 경기가 없습니다.",
-                    color = Color.Gray,
-                    textAlign = TextAlign.Center
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+            } else {
                 items(filteredSchedules) { schedule ->
                     val isScheduled = scheduledAlarms.contains(schedule.gnum)
-                    ScheduleItem(
-                        schedule = schedule,
-                        isScheduled = isScheduled,
-                        onAlarmClick = {
-                            viewModel.toggleAlarm(schedule, context, 1)
-                        }
+                    Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+                        ScheduleItem(
+                            schedule = schedule,
+                            isScheduled = isScheduled,
+                            onAlarmClick = {
+                                viewModel.toggleAlarm(schedule, context, 1)
+                            }
+                        )
+                    }
+                }
+            }
+
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp, bottom = 24.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDownward,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "화면을 아래로 스와이프하여 데이터 업데이트가 가능합니다",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        textAlign = TextAlign.Center
                     )
                 }
             }

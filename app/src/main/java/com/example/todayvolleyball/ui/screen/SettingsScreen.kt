@@ -3,6 +3,8 @@ package com.example.todayvolleyball.ui.screen
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.example.todayvolleyball.util.verticalScrollbar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -117,13 +119,23 @@ fun SettingsScreen(
                     modifier = Modifier.padding(vertical = 12.dp)
                 )
             } else {
+                val listState = rememberLazyListState()
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .weight(1f, fill = false)
+                        .verticalScrollbar(
+                            state = listState,
+                            thumbColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                            width = 6.dp,
+                            paddingEnd = 2.dp
+                        ),
+                    contentPadding = PaddingValues(end = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(reservedSchedules) { schedule ->
+                    items(reservedSchedules, key = { it.gnum }) { schedule ->
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
@@ -225,9 +237,9 @@ private fun WheelTimePicker(
     initialMinute: Int,
     onTimeChanged: (hour: Int, minute: Int) -> Unit
 ) {
-    var isAm by remember { mutableStateOf(initialHour < 12) }
-    var hour12 by remember { mutableStateOf(if (initialHour % 12 == 0) 12 else initialHour % 12) }
-    var minute by remember { mutableStateOf(initialMinute) }
+    var isAm by remember(initialHour) { mutableStateOf(initialHour < 12) }
+    var hour12 by remember(initialHour) { mutableStateOf(if (initialHour % 12 == 0) 12 else initialHour % 12) }
+    var minute by remember(initialMinute) { mutableStateOf(initialMinute) }
 
     fun notifyTimeChange(am: Boolean, h: Int, m: Int) {
         val h24 = when {
@@ -257,6 +269,12 @@ private fun WheelTimePicker(
                         notifyTimeChange(isAm, hour12, minute)
                     }
                 }
+            },
+            update = { view ->
+                val targetVal = if (isAm) 0 else 1
+                if (view.value != targetVal) {
+                    view.value = targetVal
+                }
             }
         )
 
@@ -273,6 +291,11 @@ private fun WheelTimePicker(
                         hour12 = newVal
                         notifyTimeChange(isAm, hour12, minute)
                     }
+                }
+            },
+            update = { view ->
+                if (view.value != hour12) {
+                    view.value = hour12
                 }
             }
         )
@@ -293,6 +316,11 @@ private fun WheelTimePicker(
                         minute = newVal
                         notifyTimeChange(isAm, hour12, minute)
                     }
+                }
+            },
+            update = { view ->
+                if (view.value != minute) {
+                    view.value = minute
                 }
             }
         )

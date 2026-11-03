@@ -6,112 +6,173 @@
 
     <!-- Ground Drop Shadow -->
     <path
-        android:fillColor="#25000000"
-        android:pathData="M60,112 C82,112 100,107 100,100 C100,93 82,88 60,88 C38,88 20,93 20,100 C20,107 38,112 60,112 Z" />
+        android:fillColor="#15000000"
+        android:pathData="M60,114 C82,114 102,109 102,102 C102,95 82,90 60,90 C38,90 18,95 18,102 C18,109 38,114 60,114 Z" />
 
-    <!-- Mikasa Royal Blue Sphere Base -->
+    <!-- White Volleyball Base Sphere -->
     <path
-        android:fillColor="#12279E"
-        android:pathData="M60,15 A45,45 0 1,0 60,105 A45,45 0 1,0 60,15 Z" />
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,10 A48,48 0 1,0 60,106 A48,48 0 1,0 60,10 Z" />
 
-    <!-- Mikasa V200W Yellow Wave Panels (#FFC700) -->
-
-    <!-- Top Left Wave -->
+    <!-- 3D Spherical Soft Shadow Overlay (Matching Photo: Light Top-Left, Shadow Bottom-Right) -->
     <path
-        android:fillColor="#FFC700"
-        android:pathData="M60,15 C42,15 28,26 20,40 C34,36 50,38 56,24 C58,19 59,16 60,15 Z" />
+        android:fillColor="#0E000000"
+        android:pathData="M60,10 A48,48 0 0,1 108,58 A48,48 0 0,1 60,106 A48,48 0 0,0 60,10 Z" />
 
-    <!-- Top Right Wave -->
+    <!-- Outer Ball Border Ring -->
     <path
-        android:fillColor="#FFB800"
-        android:pathData="M60,15 C78,15 92,26 100,40 C86,36 70,38 64,24 C62,19 61,16 60,15 Z" />
+        android:strokeColor="#CBD5E1"
+        android:strokeWidth="2.0"
+        android:pathData="M60,10 A48,48 0 1,0 60,106 A48,48 0 1,0 60,10 Z" />
 
-    <!-- Left Top Wave -->
-    <path
-        android:fillColor="#FFC700"
-        android:pathData="M15,60 C15,42 26,28 40,20 C36,34 38,50 24,56 C19,58 16,59 15,60 Z" />
+    <!-- Traditional 18-Panel Volleyball Interlock Pattern (Matching Photo) -->
 
-    <!-- Left Bottom Wave -->
+    <!-- Vertical 3-Panel Strip Section (Left-Center) -->
     <path
-        android:fillColor="#FFB800"
-        android:pathData="M15,60 C15,78 26,92 40,100 C36,86 38,70 24,64 C19,62 16,61 15,60 Z" />
-
-    <!-- Right Top Wave -->
-    <path
-        android:fillColor="#FFB800"
-        android:pathData="M105,60 C105,42 94,28 80,20 C84,34 82,50 96,56 C101,58 104,59 105,60 Z" />
-
-    <!-- Right Bottom Wave -->
-    <path
-        android:fillColor="#FFC700"
-        android:pathData="M105,60 C105,78 94,92 80,100 C84,86 82,70 96,64 C101,62 104,61 105,60 Z" />
-
-    <!-- Bottom Left Wave -->
-    <path
-        android:fillColor="#FFB800"
-        android:pathData="M60,105 C42,105 28,94 20,80 C34,84 50,82 56,96 C58,101 59,104 60,105 Z" />
-
-    <!-- Bottom Right Wave -->
-    <path
-        android:fillColor="#FFC700"
-        android:pathData="M60,105 C78,105 92,94 100,80 C86,84 70,82 64,96 C62,101 61,104 60,105 Z" />
-
-    <!-- 3D Spherical Shading Overlay -->
-    <path
-        android:fillColor="#1B000000"
-        android:pathData="M60,15 A45,45 0 0,1 105,60 A45,45 0 0,1 60,105 A45,45 0 0,0 60,15 Z" />
-
-    <!-- Mikasa Panel Seam Grooves (Dark Navy Outlines) -->
-    <path
-        android:strokeColor="#0B155B"
-        android:strokeWidth="3.5"
-        android:pathData="M60,15 A45,45 0 1,0 60,105 A45,45 0 1,0 60,15 Z" />
-
-    <path
-        android:strokeColor="#0B155B"
-        android:strokeWidth="2.8"
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.2"
         android:strokeLineCap="round"
-        android:pathData="M60,15 C42,15 28,26 20,40 C34,36 50,38 56,24 C58,19 59,16 60,15 Z" />
-
+        android:pathData="M34,14 C32,38 32,78 34,102" />
     <path
-        android:strokeColor="#0B155B"
-        android:strokeWidth="2.8"
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
         android:strokeLineCap="round"
-        android:pathData="M60,15 C78,15 92,26 100,40 C86,36 70,38 64,24 C62,19 61,16 60,15 Z" />
-
+        android:pathData="M43,12 C41,38 41,78 43,104" />
     <path
-        android:strokeColor="#0B155B"
-        android:strokeWidth="2.8"
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
         android:strokeLineCap="round"
-        android:pathData="M15,60 C15,42 26,28 40,20 C36,34 38,50 24,56 C19,58 16,59 15,60 Z" />
-
+        android:pathData="M52,12 C50,38 50,78 52,104" />
     <path
-        android:strokeColor="#0B155B"
-        android:strokeWidth="2.8"
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.2"
         android:strokeLineCap="round"
-        android:pathData="M15,60 C15,78 26,92 40,100 C36,86 38,70 24,64 C19,62 16,61 15,60 Z" />
+        android:pathData="M61,14 C59,38 59,78 61,102" />
 
+    <!-- Horizontal 3-Panel Strip Section (Right-Center) -->
     <path
-        android:strokeColor="#0B155B"
-        android:strokeWidth="2.8"
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.2"
         android:strokeLineCap="round"
-        android:pathData="M105,60 C105,42 94,28 80,20 C84,34 82,50 96,56 C101,58 104,59 105,60 Z" />
+        android:pathData="M61,38 C76,36 92,34 106,30" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M61,52 C77,51 93,50 107,48" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M61,66 C78,66 94,66 108,66" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:pathData="M61,80 C77,82 93,84 106,88" />
 
+    <!-- Left Horizontal/Curved Panel Group -->
     <path
-        android:strokeColor="#0B155B"
-        android:strokeWidth="2.8"
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.2"
         android:strokeLineCap="round"
-        android:pathData="M105,60 C105,78 94,92 80,100 C84,86 82,70 96,64 C101,62 104,61 105,60 Z" />
+        android:pathData="M34,32 C24,34 16,36 12,40" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M34,46 C24,48 16,50 10,54" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M34,60 C24,62 16,64 10,68" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:pathData="M34,74 C24,76 16,78 12,82" />
 
+    <!-- Top Curved Panel Group -->
     <path
-        android:strokeColor="#0B155B"
-        android:strokeWidth="2.8"
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.2"
         android:strokeLineCap="round"
-        android:pathData="M60,105 C42,105 28,94 20,80 C34,84 50,82 56,96 C58,101 59,104 60,105 Z" />
+        android:pathData="M61,38 C70,28 82,20 96,14" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M52,12 C64,10 78,10 92,10" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M43,12 C52,8 66,8 80,8" />
 
+    <!-- Bottom Curved Panel Group -->
     <path
-        android:strokeColor="#0B155B"
-        android:strokeWidth="2.8"
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.2"
         android:strokeLineCap="round"
-        android:pathData="M60,105 C78,105 92,94 100,80 C86,84 70,82 64,96 C62,101 61,104 60,105 Z" />
+        android:pathData="M61,80 C70,90 82,98 96,104" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M52,104 C64,106 78,106 92,106" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M43,104 C52,108 66,108 80,108" />
+
+    <!-- Stitched Seam Accent Lines -->
+    <path
+        android:strokeColor="#CBD5E1"
+        android:strokeWidth="1.0"
+        android:strokeLineCap="round"
+        android:pathData="M36,14 C34,38 34,78 36,102" />
+    <path
+        android:strokeColor="#CBD5E1"
+        android:strokeWidth="1.0"
+        android:strokeLineCap="round"
+        android:pathData="M59,14 C57,38 57,78 59,102" />
+    <path
+        android:strokeColor="#CBD5E1"
+        android:strokeWidth="1.0"
+        android:strokeLineCap="round"
+        android:pathData="M61,40 C76,38 92,36 106,32" />
+    <path
+        android:strokeColor="#CBD5E1"
+        android:strokeWidth="1.0"
+        android:strokeLineCap="round"
+        android:pathData="M61,78 C77,80 93,82 106,86" />
+
+    <!-- Dynamic Ball Bounce V Trajectory (Thin Top-Left Start -> Thick Ball End) -->
+    <path
+        android:fillColor="#1D4ED8"
+        android:pathData="M 29,41 Q 40,57 53,76 Q 66,57 75,32 L 85,45 Q 70,64 57,83 Q 51,85 48,82 Q 40,63 31,43 Z" />
+
+    <!-- Bouncing Ball at Top-Right (Center 81, 38, Radius 10) - NO SEAM PATTERN -->
+    <path
+        android:fillColor="#1F000000"
+        android:pathData="M 81,48.5 C 85,48.5 89,47 89,45.5 C 89,44 85,43 81,43 C 77,43 73,44 73,45.5 C 73,47 77,48.5 81,48.5 Z" />
+
+    <!-- Pure Blue Bouncing Ball Sphere Base -->
+    <path
+        android:fillColor="#1D4ED8"
+        android:pathData="M 81,28 A 10,10 0 1,0 81,48 A 10,10 0 1,0 81,28 Z" />
+
+    <!-- 3D Spherical Soft Highlight Overlay -->
+    <path
+        android:fillColor="#30FFFFFF"
+        android:pathData="M 81,28 A 10,10 0 0,1 91,38 A 10,10 0 0,1 81,48 A 10,10 0 0,0 81,28 Z" />
+
+    <!-- Outer Ball Accent Ring -->
+    <path
+        android:strokeColor="#1E40AF"
+        android:strokeWidth="1.1"
+        android:pathData="M 81,28 A 10,10 0 1,0 81,48 A 10,10 0 1,0 81,28 Z" />
+
 </vector>

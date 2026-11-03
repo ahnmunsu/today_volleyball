@@ -9,8 +9,10 @@ import com.example.todayvolleyball.data.local.SettingsDataStore
 import com.example.todayvolleyball.domain.model.Schedule
 import com.example.todayvolleyball.domain.repository.VolleyballRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -35,6 +37,9 @@ class CalendarViewModel @Inject constructor(
             initialValue = emptySet()
         )
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     val savedLeagueFilter: StateFlow<String> = settingsDataStore.savedLeagueFilter
         .stateIn(
             scope = viewModelScope,
@@ -50,13 +55,24 @@ class CalendarViewModel @Inject constructor(
         )
 
     init {
-        fetchData()
+        refreshData()
     }
 
     fun fetchData() {
+        refreshData()
+    }
+
+    fun refreshData() {
         viewModelScope.launch {
-            repository.fetchAndSaveTeams()
-            repository.fetchAndSaveSchedules()
+            _isRefreshing.value = true
+            try {
+                repository.fetchAndSaveTeams()
+                repository.fetchAndSaveSchedules()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isRefreshing.value = false
+            }
         }
     }
 

@@ -84,6 +84,15 @@ class SettingsDataStore(private val context: Context) {
         }
     }
 
+    suspend fun removeScheduledAlarms(gnums: Collection<Int>) {
+        if (gnums.isEmpty()) return
+        context.dataStore.edit { preferences ->
+            val current = preferences[SCHEDULED_ALARMS] ?: emptySet()
+            val removeSet = gnums.map { it.toString() }.toSet()
+            preferences[SCHEDULED_ALARMS] = current - removeSet
+        }
+    }
+
     suspend fun saveLeagueFilter(league: String) {
         context.dataStore.edit { preferences ->
             preferences[SAVED_LEAGUE_FILTER] = league

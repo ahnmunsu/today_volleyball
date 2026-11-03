@@ -10,9 +10,11 @@ import androidx.core.app.NotificationCompat
 import androidx.room.Room
 import com.example.todayvolleyball.MainActivity
 import com.example.todayvolleyball.R
+import com.example.todayvolleyball.data.local.SettingsDataStore
 import com.example.todayvolleyball.data.local.VolleyballDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -33,6 +35,15 @@ class DailyAlarmReceiver : BroadcastReceiver() {
                 if (todayMatches.isNotEmpty()) {
                     val summary = todayMatches.joinToString("\n") { "${it.homeName} vs ${it.awayName} (${it.time})" }
                     showNotification(context, summary)
+                }
+
+                // Reschedule exact daily alarm for the next day
+                val settingsDataStore = SettingsDataStore(context.applicationContext)
+                val enabled = settingsDataStore.dailyAlarmEnabled.first()
+                if (enabled) {
+                    val hour = settingsDataStore.dailyAlarmHour.first()
+                    val minute = settingsDataStore.dailyAlarmMinute.first()
+                    AlarmScheduler(context.applicationContext).scheduleDailyAlarm(hour, minute)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

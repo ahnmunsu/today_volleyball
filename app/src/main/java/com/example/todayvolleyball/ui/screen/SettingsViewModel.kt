@@ -9,11 +9,14 @@ import com.example.todayvolleyball.data.local.SettingsDataStore
 import com.example.todayvolleyball.domain.model.Schedule
 import com.example.todayvolleyball.domain.repository.VolleyballRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
@@ -34,12 +37,30 @@ class SettingsViewModel @Inject constructor(
     val dailyAlarmMinute: StateFlow<Int> = settingsDataStore.dailyAlarmMinute
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
+    private val tickerFlow = flow {
+        while (true) {
+            emit(Unit)
+            delay(30_000)
+        }
+    }
+
     val reservedSchedules: StateFlow<List<Schedule>> = combine(
         repository.getSchedulesFlow(),
-        settingsDataStore.scheduledAlarms
-    ) { schedules, alarmIds ->
-        schedules.filter { alarmIds.contains(it.gnum) }
-            .sortedBy { it.date + " " + it.time }
+        settingsDataStore.scheduledAlarms,
+        tickerFlow
+    ) { schedules, alarmIds, _ ->
+        val now = LocalDateTime.now()
+        val (valid, expired) = schedules
+            .filter { alarmIds.contains(it.gnum) }
+            .partition { !it.hasPassed(now) }
+
+        if (expired.isNotEmpty()) {
+            viewModelScope.launch {
+                settingsDataStore.removeScheduledAlarms(expired.map { it.gnum })
+            }
+        }
+
+        valid.sortedBy { it.date + " " + it.time }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun toggleMatchAlarm(enabled: Boolean) {

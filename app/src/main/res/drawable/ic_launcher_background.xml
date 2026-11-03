@@ -3,7 +3,139 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Pure White Background -->
     <path
-        android:fillColor="#081452"
+        android:fillColor="#FFFFFF"
         android:pathData="M0,0h108v108h-108z" />
+
+    <!-- 3D Spherical Soft Shading (Light Top-Left, Shadow Bottom-Right as in photo) -->
+    <path
+        android:fillColor="#0D000000"
+        android:pathData="M54,0 A54,54 0 0,1 108,54 A54,54 0 0,1 54,108 A54,54 0 0,0 54,0 Z" />
+
+    <!-- Traditional 18-Panel Leather Volleyball Interlock Pattern (Matching Photo) -->
+
+    <!-- Vertical 3-Panel Strip Section (Left-Center) -->
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.0"
+        android:strokeLineCap="round"
+        android:pathData="M26,8 C24,34 24,74 26,100" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M35,6 C33,34 33,74 35,102" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M44,6 C42,34 42,74 44,102" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.0"
+        android:strokeLineCap="round"
+        android:pathData="M53,8 C51,34 51,74 53,100" />
+
+    <!-- Horizontal 3-Panel Strip Section (Right-Center) -->
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.0"
+        android:strokeLineCap="round"
+        android:pathData="M53,32 C68,30 84,28 104,24" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M53,46 C69,45 85,44 105,42" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M53,60 C70,60 86,60 106,60" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.0"
+        android:strokeLineCap="round"
+        android:pathData="M53,74 C69,76 85,78 104,82" />
+
+    <!-- Left Horizontal/Curved Panel Group -->
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.0"
+        android:strokeLineCap="round"
+        android:pathData="M26,26 C16,28 8,30 4,34" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M26,40 C16,42 8,44 2,48" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M26,54 C16,56 8,58 2,62" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.0"
+        android:strokeLineCap="round"
+        android:pathData="M26,68 C16,70 8,72 4,76" />
+
+    <!-- Top Curved Panel Group -->
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.0"
+        android:strokeLineCap="round"
+        android:pathData="M53,32 C62,22 74,14 88,8" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M44,6 C56,4 70,4 84,4" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M35,6 C44,2 58,2 72,2" />
+
+    <!-- Bottom Curved Panel Group -->
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2.0"
+        android:strokeLineCap="round"
+        android:pathData="M53,74 C62,84 74,92 88,98" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M44,102 C56,104 70,104 84,104" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M35,102 C44,106 58,106 72,106" />
+
+    <!-- Stitched Leather Seam Accents (Soft Parallel Stitch Lines) -->
+    <path
+        android:strokeColor="#CBD5E1"
+        android:strokeWidth="1.0"
+        android:strokeLineCap="round"
+        android:pathData="M28,8 C26,34 26,74 28,100" />
+    <path
+        android:strokeColor="#CBD5E1"
+        android:strokeWidth="1.0"
+        android:strokeLineCap="round"
+        android:pathData="M51,8 C49,34 49,74 51,100" />
+    <path
+        android:strokeColor="#CBD5E1"
+        android:strokeWidth="1.0"
+        android:strokeLineCap="round"
+        android:pathData="M53,34 C68,32 84,30 104,26" />
+    <path
+        android:strokeColor="#CBD5E1"
+        android:strokeWidth="1.0"
+        android:strokeLineCap="round"
+        android:pathData="M53,72 C69,74 85,76 104,80" />
+
 </vector>
