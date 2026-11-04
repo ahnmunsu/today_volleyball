@@ -99,6 +99,10 @@ class CalendarViewModel @Inject constructor(
                 settingsDataStore.toggleScheduledAlarm(schedule.gnum, false)
                 Toast.makeText(context, "알림 예약이 취소되었습니다.", Toast.LENGTH_SHORT).show()
             } else {
+                if (!schedule.canScheduleAlarm(hoursBefore)) {
+                    Toast.makeText(context, "경기 시작 1시간 이내에는 알림을 예약할 수 없습니다.", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
                 val success = alarmScheduler.scheduleMatchAlarm(schedule, hoursBefore)
                 if (success) {
                     settingsDataStore.toggleScheduledAlarm(schedule.gnum, true)

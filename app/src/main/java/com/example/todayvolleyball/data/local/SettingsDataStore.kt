@@ -17,6 +17,7 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "se
 class SettingsDataStore(private val context: Context) {
     companion object {
         val ENABLE_MATCH_ALARM = booleanPreferencesKey("enable_match_alarm")
+        val ENABLE_MATCH_RESULT_ALARM = booleanPreferencesKey("enable_match_result_alarm")
         val MATCH_ALARM_HOURS_BEFORE = booleanPreferencesKey("match_alarm_hours_before")
         val ENABLE_DAILY_ALARM = booleanPreferencesKey("enable_daily_alarm")
         val DAILY_ALARM_HOUR = intPreferencesKey("daily_alarm_hour")
@@ -25,10 +26,14 @@ class SettingsDataStore(private val context: Context) {
         val SCHEDULED_ALARMS = stringSetPreferencesKey("scheduled_alarms")
         val SAVED_LEAGUE_FILTER = stringPreferencesKey("saved_league_filter")
         val SAVED_TEAM_FILTER = stringPreferencesKey("saved_team_filter")
+        val NOTIFIED_FINISHED_MATCHES = stringSetPreferencesKey("notified_finished_matches")
     }
 
     val matchAlarmEnabled: Flow<Boolean> = context.dataStore.data
         .map { preferences -> preferences[ENABLE_MATCH_ALARM] ?: true }
+
+    val matchResultAlarmEnabled: Flow<Boolean> = context.dataStore.data
+        .map { preferences -> preferences[ENABLE_MATCH_RESULT_ALARM] ?: true }
 
     val dailyAlarmEnabled: Flow<Boolean> = context.dataStore.data
         .map { preferences -> preferences[ENABLE_DAILY_ALARM] ?: false }
@@ -47,15 +52,33 @@ class SettingsDataStore(private val context: Context) {
             preferences[SCHEDULED_ALARMS]?.mapNotNull { it.toIntOrNull() }?.toSet() ?: emptySet()
         }
 
+    val notifiedFinishedMatches: Flow<Set<Int>> = context.dataStore.data
+        .map { preferences ->
+            preferences[NOTIFIED_FINISHED_MATCHES]?.mapNotNull { it.toIntOrNull() }?.toSet() ?: emptySet()
+        }
+
     val savedLeagueFilter: Flow<String> = context.dataStore.data
         .map { preferences -> preferences[SAVED_LEAGUE_FILTER] ?: "ALL" }
 
     val savedTeamFilter: Flow<String?> = context.dataStore.data
         .map { preferences -> preferences[SAVED_TEAM_FILTER] }
 
+    suspend fun markMatchFinishedNotified(gnum: Int) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[NOTIFIED_FINISHED_MATCHES] ?: emptySet()
+            preferences[NOTIFIED_FINISHED_MATCHES] = current + gnum.toString()
+        }
+    }
+
     suspend fun setMatchAlarmEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[ENABLE_MATCH_ALARM] = enabled
+        }
+    }
+
+    suspend fun setMatchResultAlarmEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[ENABLE_MATCH_RESULT_ALARM] = enabled
         }
     }
 

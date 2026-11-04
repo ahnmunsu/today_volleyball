@@ -39,6 +39,7 @@ fun SettingsScreen(
         }
     ) { paddingValues ->
         val matchAlarmEnabled by viewModel.matchAlarmEnabled.collectAsState()
+        val matchResultAlarmEnabled by viewModel.matchResultAlarmEnabled.collectAsState()
         val dailyAlarmEnabled by viewModel.dailyAlarmEnabled.collectAsState()
         val dailyAlarmHour by viewModel.dailyAlarmHour.collectAsState()
         val dailyAlarmMinute by viewModel.dailyAlarmMinute.collectAsState()
@@ -102,6 +103,17 @@ fun SettingsScreen(
                 Switch(
                     checked = matchAlarmEnabled,
                     onCheckedChange = { viewModel.toggleMatchAlarm(it) }
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("당일 경기 종료 결과 알림 수신")
+                Switch(
+                    checked = matchResultAlarmEnabled,
+                    onCheckedChange = { viewModel.toggleMatchResultAlarm(it) }
                 )
             }
             HorizontalDivider()

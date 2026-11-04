@@ -28,6 +28,9 @@ class SettingsViewModel @Inject constructor(
     val matchAlarmEnabled: StateFlow<Boolean> = settingsDataStore.matchAlarmEnabled
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
+    val matchResultAlarmEnabled: StateFlow<Boolean> = settingsDataStore.matchResultAlarmEnabled
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
     val dailyAlarmEnabled: StateFlow<Boolean> = settingsDataStore.dailyAlarmEnabled
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
@@ -66,6 +69,12 @@ class SettingsViewModel @Inject constructor(
     fun toggleMatchAlarm(enabled: Boolean) {
         viewModelScope.launch {
             settingsDataStore.setMatchAlarmEnabled(enabled)
+        }
+    }
+
+    fun toggleMatchResultAlarm(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsDataStore.setMatchResultAlarmEnabled(enabled)
         }
     }
 

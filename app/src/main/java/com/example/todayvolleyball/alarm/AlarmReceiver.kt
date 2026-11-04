@@ -11,51 +11,35 @@ import androidx.core.app.NotificationCompat
 import com.example.todayvolleyball.MainActivity
 import com.example.todayvolleyball.R
 
+import com.example.todayvolleyball.data.local.SettingsDataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+
 class AlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
         if (action == ACTION_MATCH_ALARM || action == ACTION_DAILY_ALARM) {
-            val message = intent.getStringExtra(EXTRA_MATCH_INFO) ?: "배구 경기가 곧 시작합니다!"
-            val matchId = intent.getIntExtra(EXTRA_MATCH_ID, 0)
-            showNotification(context, message, matchId)
+            val pendingResult = goAsync()
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val settingsDataStore = SettingsDataStore(context.applicationContext)
+                    if (action == ACTION_MATCH_ALARM) {
+                        val enabled = settingsDataStore.matchAlarmEnabled.first()
+                        if (!enabled) return@launch
+                    }
+                    val message = intent.getStringExtra(EXTRA_MATCH_INFO) ?: "배구 경기가 곧 시작합니다!"
+                    val matchId = intent.getIntExtra(EXTRA_MATCH_ID, 0)
+                    showNotification(context, "오늘의 배구", message, matchId)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    pendingResult.finish()
+                }
+            }
         }
-    }
-
-    private fun showNotification(context: Context, message: String, matchId: Int) {
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Volleyball Match Alerts",
-                NotificationManager.IMPORTANCE_HIGH
-            )
-            notificationManager.createNotificationChannel(channel)
-        }
-
-        val launchIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            // Pass matchId if you want to deep link to specific match details
-            putExtra("match_id", matchId)
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            matchId, // Use matchId as request code so each match can be opened separately
-            launchIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // Replace with a proper icon later
-            .setContentTitle("오늘의 배구")
-            .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
-            .build()
-
-        notificationManager.notify(matchId, notification)
     }
 
     companion object {
@@ -64,5 +48,40 @@ class AlarmReceiver : BroadcastReceiver() {
         const val EXTRA_MATCH_INFO = "match_info"
         const val EXTRA_MATCH_ID = "match_id"
         const val CHANNEL_ID = "match_alarm_channel"
+
+        fun showNotification(context: Context, title: String, message: String, notificationId: Int) {
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    CHANNEL_ID,
+                    "Volleyball Match Alerts",
+                    NotificationManager.IMPORTANCE_HIGH
+                )
+                notificationManager.createNotificationChannel(channel)
+            }
+
+            val launchIntent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra("match_id", notificationId)
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                notificationId,
+                launchIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
+                .build()
+
+            notificationManager.notify(notificationId, notification)
+        }
     }
 }

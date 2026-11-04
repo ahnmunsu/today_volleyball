@@ -25,19 +25,20 @@ class AlarmScheduler(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Parse date "YYYY-MM-DD" and time "HH:MM"
-        val dateParts = schedule.date.split("-")
-        val timeParts = schedule.time.split(":")
+        // Parse date "YYYY-MM-DD" and time "HH:MM" or "HH:MM:SS"
+        val dateParts = schedule.date.trim().split("-")
+        val timeParts = schedule.time.trim().split(":")
         
-        if (dateParts.size != 3 || timeParts.size != 2) return false
+        if (dateParts.size != 3 || timeParts.size < 2) return false
 
         val calendar = Calendar.getInstance().apply {
-            set(Calendar.YEAR, dateParts[0].toInt())
-            set(Calendar.MONTH, dateParts[1].toInt() - 1)
-            set(Calendar.DAY_OF_MONTH, dateParts[2].toInt())
-            set(Calendar.HOUR_OF_DAY, timeParts[0].toInt())
-            set(Calendar.MINUTE, timeParts[1].toInt())
+            set(Calendar.YEAR, dateParts[0].trim().toInt())
+            set(Calendar.MONTH, dateParts[1].trim().toInt() - 1)
+            set(Calendar.DAY_OF_MONTH, dateParts[2].trim().toInt())
+            set(Calendar.HOUR_OF_DAY, timeParts[0].trim().toInt())
+            set(Calendar.MINUTE, timeParts[1].trim().toInt())
             set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
             
             // Subtract hours
             add(Calendar.HOUR_OF_DAY, -hoursBefore)

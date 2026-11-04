@@ -586,9 +586,11 @@ fun ScheduleItem(
                 
                 // 알림 버튼 (종료되지 않은 경기만)
                 if (!schedule.isFinished) {
+                    val canSchedule = schedule.canScheduleAlarm(1)
                     if (isScheduled) {
                         Button(
                             onClick = onAlarmClick,
+                            enabled = canSchedule,
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                             modifier = Modifier.height(36.dp)
                         ) {
@@ -597,10 +599,11 @@ fun ScheduleItem(
                     } else {
                         OutlinedButton(
                             onClick = onAlarmClick,
+                            enabled = canSchedule,
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                             modifier = Modifier.height(36.dp)
                         ) {
-                            Text("알림 예약", fontSize = 12.sp)
+                            Text(if (canSchedule) "알림 예약" else "예약 불가", fontSize = 12.sp)
                         }
                     }
                 }
