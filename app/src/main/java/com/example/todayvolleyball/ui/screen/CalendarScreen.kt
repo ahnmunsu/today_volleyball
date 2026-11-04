@@ -1,6 +1,7 @@
 package com.example.todayvolleyball.ui.screen
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -21,8 +23,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -59,7 +64,7 @@ fun CalendarScreen(
     
     // DataStore에 저장된 필터 상태 연동 (앱 재시작 시에도 유지)
     val selectedLeague by viewModel.savedLeagueFilter.collectAsState()
-    val selectedTeam by viewModel.savedTeamFilter.collectAsState()
+    val selectedTeams by viewModel.selectedTeams.collectAsState()
 
     // 주간 달력 상태 관리
     val calendarState = rememberSelectableWeekCalendarState(
@@ -94,10 +99,13 @@ fun CalendarScreen(
         }
     }
 
-    // 리그 선택 변경 시 선택된 팀이 목록에 없으면 선택 초기화 및 저장
+    // 리그 선택 변경 시 선택된 팀 중 가용 목록에 없는 팀 제거
     LaunchedEffect(selectedLeague) {
-        if (selectedTeam != null && availableTeams.none { it.name == selectedTeam }) {
-            viewModel.updateTeamFilter(null)
+        if (selectedTeams.isNotEmpty()) {
+            val validTeams = selectedTeams.filter { name -> availableTeams.any { it.name == name } }.toSet()
+            if (validTeams != selectedTeams) {
+                viewModel.updateSelectedTeams(validTeams)
+            }
         }
     }
 
@@ -108,10 +116,10 @@ fun CalendarScreen(
             "WOMEN" -> !schedule.isMen
             else -> true
         }
-        val teamMatch = if (selectedTeam.isNullOrEmpty()) {
+        val teamMatch = if (selectedTeams.isEmpty()) {
             true
         } else {
-            schedule.homeTeamShortName == selectedTeam || schedule.awayTeamShortName == selectedTeam
+            schedule.homeTeamShortName in selectedTeams || schedule.awayTeamShortName in selectedTeams
         }
         return leagueMatch && teamMatch
     }
@@ -378,35 +386,22 @@ fun CalendarScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // Column 0: 전체 팀 선택 버튼
-                            Surface(
-                                color = if (selectedTeam == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                shape = RoundedCornerShape(6.dp),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(30.dp)
-                                    .clickable { viewModel.updateTeamFilter(null) }
-                            ) {
-                                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                    Text(
-                                        text = "전체",
-                                        color = if (selectedTeam == null) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontSize = 10.sp,
-                                        fontWeight = if (selectedTeam == null) FontWeight.Bold else FontWeight.Normal,
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                            }
+                            TeamChip(
+                                name = "전체",
+                                backgroundColor = MaterialTheme.colorScheme.primary,
+                                isSelected = selectedTeams.isEmpty(),
+                                onClick = { viewModel.clearTeamFilter() },
+                                modifier = Modifier.weight(1f)
+                            )
 
                             // Column 1~7: 여자부 팀 7개
                             womenTeams.forEach { team ->
-                                val isSelected = selectedTeam == team.name
+                                val isSelected = selectedTeams.contains(team.name)
                                 TeamChip(
                                     name = team.name,
-                                    colorHex = team.colorHex,
+                                    backgroundColor = parseHexColor(team.colorHex),
                                     isSelected = isSelected,
-                                    onClick = {
-                                        viewModel.updateTeamFilter(if (isSelected) null else team.name)
-                                    },
+                                    onClick = { viewModel.toggleTeamFilter(team.name) },
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -425,36 +420,23 @@ fun CalendarScreen(
                                 Spacer(modifier = Modifier.weight(1f))
                             } else {
                                 // 남자부 필터만 선택 시 Column 0에 [전체] 버튼 배치
-                                Surface(
-                                    color = if (selectedTeam == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                    shape = RoundedCornerShape(6.dp),
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(30.dp)
-                                        .clickable { viewModel.updateTeamFilter(null) }
-                                ) {
-                                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                        Text(
-                                            text = "전체",
-                                            color = if (selectedTeam == null) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                            fontSize = 10.sp,
-                                            fontWeight = if (selectedTeam == null) FontWeight.Bold else FontWeight.Normal,
-                                            textAlign = TextAlign.Center
-                                        )
-                                    }
-                                }
+                                TeamChip(
+                                    name = "전체",
+                                    backgroundColor = MaterialTheme.colorScheme.primary,
+                                    isSelected = selectedTeams.isEmpty(),
+                                    onClick = { viewModel.clearTeamFilter() },
+                                    modifier = Modifier.weight(1f)
+                                )
                             }
 
                             // Column 1~7: 남자부 팀 7개
                             menTeams.forEach { team ->
-                                val isSelected = selectedTeam == team.name
+                                val isSelected = selectedTeams.contains(team.name)
                                 TeamChip(
                                     name = team.name,
-                                    colorHex = team.colorHex,
+                                    backgroundColor = parseHexColor(team.colorHex),
                                     isSelected = isSelected,
-                                    onClick = {
-                                        viewModel.updateTeamFilter(if (isSelected) null else team.name)
-                                    },
+                                    onClick = { viewModel.toggleTeamFilter(team.name) },
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -528,28 +510,55 @@ fun CalendarScreen(
 @Composable
 private fun TeamChip(
     name: String,
-    colorHex: String,
+    backgroundColor: Color,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val teamColor = parseHexColor(colorHex)
+    val isLightBg = backgroundColor.luminance() > 0.55f
+    val contentColor = if (isLightBg) Color(0xFF1C1B1F) else Color.White
+    val strokeColor = if (isLightBg) Color(0xFF1C1B1F) else Color.White
+
     Surface(
-        color = if (isSelected) teamColor else teamColor.copy(alpha = 0.35f),
+        onClick = onClick,
+        color = backgroundColor,
         shape = RoundedCornerShape(6.dp),
+        border = if (isSelected) BorderStroke(2.5.dp, strokeColor) else null,
+        shadowElevation = if (isSelected) 4.dp else 0.dp,
         modifier = modifier
             .height(30.dp)
-            .clickable(onClick = onClick)
+            .zIndex(if (isSelected) 1f else 0f)
+            .graphicsLayer {
+                if (isSelected) {
+                    scaleX = 1.05f
+                    scaleY = 1.05f
+                }
+            }
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            Text(
-                text = name,
-                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
-                fontSize = 10.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                textAlign = TextAlign.Center,
-                maxLines = 1
-            )
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 2.dp)
+            ) {
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = contentColor,
+                        modifier = Modifier.size(11.dp)
+                    )
+                    Spacer(modifier = Modifier.width(1.dp))
+                }
+                Text(
+                    text = name,
+                    color = contentColor,
+                    fontSize = 10.sp,
+                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1
+                )
+            }
         }
     }
 }

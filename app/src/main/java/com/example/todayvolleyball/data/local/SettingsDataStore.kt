@@ -45,7 +45,15 @@ class SettingsDataStore(private val context: Context) {
         .map { preferences -> preferences[DAILY_ALARM_MINUTE] ?: 0 }
 
     val selectedTeams: Flow<Set<String>> = context.dataStore.data
-        .map { preferences -> preferences[SELECTED_TEAMS] ?: emptySet() }
+        .map { preferences ->
+            val set = preferences[SELECTED_TEAMS]
+            if (set != null) {
+                set
+            } else {
+                val single = preferences[SAVED_TEAM_FILTER]
+                if (!single.isNullOrEmpty()) setOf(single) else emptySet()
+            }
+        }
 
     val scheduledAlarms: Flow<Set<Int>> = context.dataStore.data
         .map { preferences ->
@@ -122,13 +130,22 @@ class SettingsDataStore(private val context: Context) {
         }
     }
 
-    suspend fun saveTeamFilter(team: String?) {
+    suspend fun saveSelectedTeams(teams: Set<String>) {
         context.dataStore.edit { preferences ->
-            if (team.isNullOrEmpty()) {
-                preferences.remove(SAVED_TEAM_FILTER)
+            preferences.remove(SAVED_TEAM_FILTER)
+            if (teams.isEmpty()) {
+                preferences.remove(SELECTED_TEAMS)
             } else {
-                preferences[SAVED_TEAM_FILTER] = team
+                preferences[SELECTED_TEAMS] = teams
             }
+        }
+    }
+
+    suspend fun saveTeamFilter(team: String?) {
+        if (team.isNullOrEmpty()) {
+            saveSelectedTeams(emptySet())
+        } else {
+            saveSelectedTeams(setOf(team))
         }
     }
 }

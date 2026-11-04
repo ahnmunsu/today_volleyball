@@ -47,6 +47,13 @@ class CalendarViewModel @Inject constructor(
             initialValue = "ALL"
         )
 
+    val selectedTeams: StateFlow<Set<String>> = settingsDataStore.selectedTeams
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptySet()
+        )
+
     val savedTeamFilter: StateFlow<String?> = settingsDataStore.savedTeamFilter
         .stateIn(
             scope = viewModelScope,
@@ -79,6 +86,30 @@ class CalendarViewModel @Inject constructor(
     fun updateLeagueFilter(league: String) {
         viewModelScope.launch {
             settingsDataStore.saveLeagueFilter(league)
+        }
+    }
+
+    fun updateSelectedTeams(teams: Set<String>) {
+        viewModelScope.launch {
+            settingsDataStore.saveSelectedTeams(teams)
+        }
+    }
+
+    fun toggleTeamFilter(teamName: String) {
+        viewModelScope.launch {
+            val current = selectedTeams.value
+            val updated = if (current.contains(teamName)) {
+                current - teamName
+            } else {
+                current + teamName
+            }
+            settingsDataStore.saveSelectedTeams(updated)
+        }
+    }
+
+    fun clearTeamFilter() {
+        viewModelScope.launch {
+            settingsDataStore.saveSelectedTeams(emptySet())
         }
     }
 
