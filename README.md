@@ -1,6 +1,6 @@
 # 🏐 Today Volleyball (오늘의 배구)
 
-> **V-리그(KOVO) 프로배구 경기 일정, 실시간 결과, 팀 순위 및 맞춤 알림을 제공하는 안드로이드 애플리케이션**
+> **프로배구 경기 일정, 실시간 결과, 팀 순위 및 맞춤 알림을 제공하는 안드로이드 애플리케이션**
 
 [![Android](https://img.shields.io/badge/Platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](https://developer.android.com/)
 [![Kotlin](https://img.shields.io/badge/Language-Kotlin_2.0-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
@@ -24,7 +24,7 @@
 
 ## 📖 프로젝트 소개 (Overview)
 
-**Today Volleyball (오늘의 배구)** 은 대한민국 프로배구 V-리그(KOVO) 팬들을 위한 최신 안드로이드 애플리케이션입니다.  
+**Today Volleyball (오늘의 배구)** 은 프로배구 팬들을 위한 최신 안드로이드 애플리케이션입니다.  
 
 남녀부 경기 일정과 실시간 스코어/결과, 팀별 라운드 순위, 세트별 상세 점수를 한눈에 확인하고, 선호하는 팀이나 특정 경기에 대해 **경기 시작 알림 / 일일 경기 요약 알림 / 경기 결과 알림**을 맞춤 설정할 수 있습니다.
 
@@ -42,7 +42,7 @@
 * **실시간 / 경기 결과 상세**: 세트별 점수, 방송 중계 매체, 경기장 위치 정보 제공
 * **원터치 경기 알림 예약**: 캘린더 화면에서 손쉽게 개별 경기 알림 핀 켜기/끄기
 
-### 2. 🏆 V-리그 순위표 (Standings)
+### 2. 🏆 구단 순위표 (Standings)
 * **남녀부 구단 순위 정보**: 순위, 팀명, 경기 수, 승점, 승/패, 세트 득실률, 점수 득실률 종합 제공
 * **실시간 당겨서 새로고침(Pull-to-Refresh)**: 최신 구단 순위 데이터 즉시 동기화
 
@@ -53,7 +53,7 @@
 * **재부팅 복구**: `BOOT_COMPLETED` 리시버를 통해 기기 재부팅 시에도 예약 알림 자동 재등록
 
 ### 4. 🎨 팀 컬러 테마 & 다크 모드 (Theme & UX)
-* **구단 아이덴티티 컬러**: V-리그 구단별 고유 테마 컬러 반영
+* **구단 아이덴티티 컬러**: 구단별 고유 테마 컬러 반영
 * **Material 3 적용**: dynamic color 및 다크 모드(Dark Mode) 지원
 * **업데이트 변경 이력(Changelog)**: 앱 실행 시 주요 업데이트 변경 사항 팝업 안내
 
@@ -77,7 +77,7 @@
                             │
 ┌───────────────────────────▼────────────────────────────┐
 │                     Data Layer                         │
-│  [RepositoryImpl] ──► [KovoApi] (Retrofit 2 / Gson)    │
+│  [RepositoryImpl] ──► [RemoteApi] (Retrofit 2 / Gson)  │
 │                  └──► [VolleyballDao] (Room SQLite)    │
 │                  └──► [SettingsDataStore]              │
 └────────────────────────────────────────────────────────┘
@@ -111,7 +111,7 @@ com.example.todayvolleyball
 │   └── DailyAlarmReceiver.kt # 매일 지정된 시각의 당일 경기 안내 알림 수신기
 ├── data/                     # 데이터 레이어 (로컬, 원격, 리포지토리 구현)
 │   ├── local/                # Room DB Entities, DAO, Database 및 DataStore
-│   ├── remote/               # KOVO API DTO (ApiModels) 및 Retrofit Interface (KovoApi)
+│   ├── remote/               # Remote API DTO (ApiModels) 및 Retrofit Interface
 │   └── repository/           # VolleyballRepositoryImpl (원격/로컬 캐시 동기화)
 ├── di/                       # Dagger-Hilt 의존성 주입 모듈 (AppModule, WorkerModule)
 ├── domain/                   # 도메인 레이어 (순수 비즈니스 모델 및 인터페이스)
@@ -120,7 +120,7 @@ com.example.todayvolleyball
 ├── ui/                       # UI 레이어 (Jetpack Compose 화면 및 테마)
 │   ├── screen/               # Screen Composable & ViewModel
 │   │   ├── CalendarScreen.kt / CalendarViewModel.kt    # 경기 일정 캘린더
-│   │   ├── StandingsScreen.kt / StandingsViewModel.kt  # V-리그 팀 순위표
+│   │   ├── StandingsScreen.kt / StandingsViewModel.kt  # 팀 순위표
 │   │   ├── SettingsScreen.kt / SettingsViewModel.kt    # 알림 및 설정
 │   │   ├── MatchDetailScreen.kt                        # 경기 상세 정보
 │   │   ├── SplashScreen.kt                             # 스플래시 화면
@@ -168,7 +168,7 @@ cd today_volleyball
 ## ⚙️ 주요 설계 특징 (Engineering Highlights)
 
 1. **오프라인 우선 (Offline-First Architecture)**:
-   * KOVO 네트워크 API 장애 시에도 Room DB에 저장된 경기 일정과 팀 순위를 즉시 보여줍니다.
+   * 네트워크 API 장애 시에도 Room DB에 저장된 경기 일정과 팀 순위를 즉시 보여줍니다.
    * `SyncWorker`가 15분 주기로 백그라운드에서 실행되며 최신 경기 스코어를 실시간 동기화 및 갱신합니다.
 
 2. **신뢰할 수 있는 알림 복구 시스템 (Notification Recovery)**:
