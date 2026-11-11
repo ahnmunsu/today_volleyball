@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -65,16 +66,24 @@ class CalendarViewModel @Inject constructor(
         refreshData()
     }
 
-    fun fetchData() {
-        refreshData()
+    fun fetchData(context: Context? = null) {
+        refreshData(context)
     }
 
-    fun refreshData() {
+    fun refreshData(context: Context? = null) {
         viewModelScope.launch {
             _isRefreshing.value = true
             try {
                 repository.fetchAndSaveTeams()
                 repository.fetchAndSaveSchedules()
+                if (context != null) {
+                    val currentSchedules = repository.getSchedulesFlow().first()
+                    com.example.todayvolleyball.worker.SyncWorker.checkAndNotifyFinishedMatches(
+                        context.applicationContext,
+                        currentSchedules,
+                        settingsDataStore
+                    )
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {

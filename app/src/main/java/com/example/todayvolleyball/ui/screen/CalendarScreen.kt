@@ -14,7 +14,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -33,6 +35,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.example.todayvolleyball.R
 import com.example.todayvolleyball.domain.model.Schedule
 import com.example.todayvolleyball.ui.theme.MenLoseColor
@@ -54,6 +59,7 @@ data class TeamFilterItem(
 
 @Composable
 fun CalendarScreen(
+    onNavigateToStandings: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToDetail: (Int) -> Unit,
     viewModel: CalendarViewModel = hiltViewModel()
@@ -66,11 +72,34 @@ fun CalendarScreen(
     val selectedLeague by viewModel.savedLeagueFilter.collectAsState()
     val selectedTeams by viewModel.selectedTeams.collectAsState()
 
-    // 주간 달력 상태 관리
+    // 주간 달력 및 오늘 날짜 상태 관리
+    var todayState by remember { mutableStateOf(LocalDate.now()) }
     val calendarState = rememberSelectableWeekCalendarState(
-        initialSelection = listOf(LocalDate.now())
+        initialSelection = listOf(todayState)
     )
-    val selectedDate = calendarState.selectionState.selection.firstOrNull() ?: LocalDate.now()
+    val selectedDate = calendarState.selectionState.selection.firstOrNull() ?: todayState
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val now = LocalDate.now()
+                if (now != todayState) {
+                    val oldToday = todayState
+                    todayState = now
+                    val currentSelection = calendarState.selectionState.selection.firstOrNull()
+                    if (currentSelection == null || currentSelection == oldToday) {
+                        calendarState.selectionState.onDateSelected(now)
+                        calendarState.weekState.currentWeek = Week.now()
+                    }
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     // 팀 목록 데이터 추출
     val allTeams = remember(schedules) {
@@ -135,7 +164,7 @@ fun CalendarScreen(
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = {
-            viewModel.refreshData()
+            viewModel.refreshData(context)
             Toast.makeText(context, "최신 리그 정보를 수동으로 동기화합니다.", Toast.LENGTH_SHORT).show()
         },
         modifier = Modifier.fillMaxSize()
@@ -156,6 +185,7 @@ fun CalendarScreen(
                             .clip(RoundedCornerShape(8.dp))
                             .clickable {
                                 val today = LocalDate.now()
+                                todayState = today
                                 calendarState.weekState.currentWeek = Week.now()
                                 calendarState.selectionState.onDateSelected(today)
                                 Toast.makeText(context, "오늘 날짜로 이동했습니다.", Toast.LENGTH_SHORT).show()
@@ -176,8 +206,29 @@ fun CalendarScreen(
                         )
                     }
 
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = {
+                            val today = LocalDate.now()
+                            todayState = today
+                            calendarState.weekState.currentWeek = Week.now()
+                            calendarState.selectionState.onDateSelected(today)
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarMonth,
+                                contentDescription = "일정",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        IconButton(onClick = onNavigateToStandings) {
+                            Icon(
+                                imageVector = Icons.Default.EmojiEvents,
+                                contentDescription = "순위",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                        }
+                        IconButton(onClick = onNavigateToSettings) {
+                            Icon(Icons.Default.Settings, contentDescription = "Settings")
+                        }
                     }
                 }
             }
@@ -231,7 +282,7 @@ fun CalendarScreen(
                     dayContent = { dayState ->
                         val date = dayState.date
                         val isSelected = calendarState.selectionState.selection.contains(date)
-                        val isToday = dayState.isCurrentDay || date == LocalDate.now()
+                        val isToday = date == todayState
 
                         // 달력 셀 내부 경기들 중 여자부(isMen = false) 경기를 위로 배치!
                         val matches = schedules.filter { 

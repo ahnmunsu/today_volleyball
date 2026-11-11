@@ -34,4 +34,14 @@ interface VolleyballDao {
 
     @Query("UPDATE schedule_changes SET isRead = 1 WHERE id = :id")
     suspend fun markChangeAsRead(id: Int)
+
+    @Query("SELECT * FROM team_ranks WHERE leagueCode = :leagueCode ORDER BY gender DESC, rank ASC")
+    fun getTeamRanksFlow(leagueCode: String): Flow<List<TeamRankEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTeamRanks(ranks: List<TeamRankEntity>)
+
+    @Query("DELETE FROM team_ranks WHERE leagueCode = :leagueCode")
+    suspend fun deleteTeamRanksByLeague(leagueCode: String)
 }
+

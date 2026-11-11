@@ -39,3 +39,21 @@ data class ScheduleChangeEntity(
     val date: String,
     val isRead: Boolean = false
 )
+
+@Entity(tableName = "team_ranks", primaryKeys = ["leagueCode", "gender", "rank"])
+data class TeamRankEntity(
+    val leagueCode: String,
+    val gender: String, // "1": Men, "2": Women
+    val rank: Int,
+    val tcode: String,
+    val tsname: String,
+    val winp: Double,
+    val win: Int,
+    val lost: Int,
+    val swin: Int,
+    val slost: Int,
+    val point: Int,
+    val lpoint: Int,
+    val con: String
+)
+

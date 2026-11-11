@@ -43,8 +43,24 @@ fun MainScreen(
             ) {
                 composable("calendar") {
                     CalendarScreen(
+                        onNavigateToStandings = {
+                            navController.navigate("standings") {
+                                launchSingleTop = true
+                            }
+                        },
                         onNavigateToSettings = { navController.navigate("settings") },
                         onNavigateToDetail = { matchId -> navController.navigate("detail/$matchId") }
+                    )
+                }
+                composable("standings") {
+                    StandingsScreen(
+                        onNavigateToCalendar = {
+                            navController.navigate("calendar") {
+                                popUpTo("calendar") { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        },
+                        onNavigateToSettings = { navController.navigate("settings") }
                     )
                 }
                 composable("settings") {

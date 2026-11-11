@@ -70,3 +70,24 @@ data class Schedule(
         }
     }
 }
+
+data class TeamRank(
+    val rank: Int,
+    val teamCode: String,
+    val teamName: String,
+    val teamShortName: String,
+    val teamColor: String,
+    val points: Double,
+    val wins: Int,
+    val losses: Int,
+    val setsWon: Int,
+    val setsLost: Int,
+    val setRatio: String,
+    val scorePoints: Int,
+    val scoreConceded: Int,
+    val scoreRatio: String,
+    val streak: String,
+    val leagueCode: String,
+    val isMen: Boolean
+)
+

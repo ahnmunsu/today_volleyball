@@ -76,3 +76,29 @@ data class ApiResult(
     @SerializedName("status") val status: Int,
     @SerializedName("message") val message: String?
 )
+
+data class TeamRankResponse(
+    @SerializedName("result") val result: ApiResult,
+    @SerializedName("payload") val payload: List<TeamRankPayload>?
+)
+
+data class TeamRankPayload(
+    @SerializedName("season") val season: String?,
+    @SerializedName("gpart") val gpart: String?,
+    @SerializedName("spart") val spart: String?, // "1": Men, "2": Women
+    @SerializedName("round") val round: Int?,
+    @SerializedName("rank") val rank: Int,
+    @SerializedName("tcode") val tcode: String?,
+    @SerializedName("tsname") val tsname: String?,
+    @SerializedName("emblemUrl") val emblemUrl: String?,
+    @SerializedName("winp") val winp: Double,
+    @SerializedName("win") val win: Int,
+    @SerializedName("lost") val lost: Int,
+    @SerializedName("swin") val swin: Int,
+    @SerializedName("slost") val slost: Int,
+    @SerializedName("point") val point: Int,
+    @SerializedName("lpoint") val lpoint: Int,
+    @SerializedName("con") val con: String?,
+    @SerializedName("udate") val udate: String?
+)
+

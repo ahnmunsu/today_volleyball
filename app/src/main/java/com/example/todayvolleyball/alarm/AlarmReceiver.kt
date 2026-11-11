@@ -8,14 +8,18 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.todayvolleyball.MainActivity
 import com.example.todayvolleyball.R
-
 import com.example.todayvolleyball.data.local.SettingsDataStore
+import com.example.todayvolleyball.worker.SyncWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 class AlarmReceiver : BroadcastReceiver() {
 
@@ -26,13 +30,27 @@ class AlarmReceiver : BroadcastReceiver() {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     val settingsDataStore = SettingsDataStore(context.applicationContext)
-                    if (action == ACTION_MATCH_ALARM) {
-                        val enabled = settingsDataStore.matchAlarmEnabled.first()
-                        if (!enabled) return@launch
-                    }
                     val message = intent.getStringExtra(EXTRA_MATCH_INFO) ?: "배구 경기가 곧 시작합니다!"
                     val matchId = intent.getIntExtra(EXTRA_MATCH_ID, 0)
-                    showNotification(context, "오늘의 배구", message, matchId)
+
+                    if (action == ACTION_MATCH_ALARM) {
+                        val enabled = settingsDataStore.matchAlarmEnabled.first()
+                        if (enabled) {
+                            showNotification(context, "오늘의 배구 🏐", message, matchId)
+
+                            // 경기 종료 체크를 위해 경기 예상 종료 시점(약 2시간 후)에 SyncWorker 실행 예약
+                            val followUpWork = OneTimeWorkRequestBuilder<SyncWorker>()
+                                .setInitialDelay(2, TimeUnit.HOURS)
+                                .build()
+                            WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
+                                "SyncWorker_MatchEnd_${matchId}",
+                                ExistingWorkPolicy.REPLACE,
+                                followUpWork
+                            )
+                        }
+                    } else {
+                        showNotification(context, "오늘의 배구 🏐", message, matchId)
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 } finally {

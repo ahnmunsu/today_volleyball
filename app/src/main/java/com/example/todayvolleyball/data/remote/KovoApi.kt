@@ -24,4 +24,19 @@ interface KovoApi {
         @Header("referer") referer: String = "https://kovo.co.kr/",
         @Header("x-service-name") serviceName: String = "user"
     ): ScheduleResponse
+
+    @GET("stat/league/team-rank")
+    suspend fun getTeamRank(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 30,
+        @Query("seasonCode") seasonCode: String = "023",
+        @Query("leagueCode") leagueCode: String = "201",
+        @Query("gender") gender: String = "1",
+        @Query("round") round: Int = 0,
+        @Header("accept") accept: String = "application/json",
+        @Header("origin") origin: String = "https://kovo.co.kr",
+        @Header("referer") referer: String = "https://kovo.co.kr/",
+        @Header("x-service-name") serviceName: String = "user"
+    ): TeamRankResponse
 }
+

@@ -2,10 +2,12 @@ package com.example.todayvolleyball.data.repository
 
 import com.example.todayvolleyball.data.local.ScheduleEntity
 import com.example.todayvolleyball.data.local.TeamEntity
+import com.example.todayvolleyball.data.local.TeamRankEntity
 import com.example.todayvolleyball.data.local.VolleyballDao
 import com.example.todayvolleyball.data.remote.KovoApi
 import com.example.todayvolleyball.domain.model.Schedule
 import com.example.todayvolleyball.domain.model.Team
+import com.example.todayvolleyball.domain.model.TeamRank
 import com.example.todayvolleyball.domain.repository.VolleyballRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -111,46 +113,145 @@ class VolleyballRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun fetchAndSaveTeamRanks(leagueCode: String, seasonCode: String) {
+        try {
+            val menResponse = api.getTeamRank(seasonCode = seasonCode, leagueCode = leagueCode, gender = "1")
+            val womenResponse = api.getTeamRank(seasonCode = seasonCode, leagueCode = leagueCode, gender = "2")
+
+            val menEntities = menResponse.payload?.map { p ->
+                TeamRankEntity(
+                    leagueCode = leagueCode,
+                    gender = "1",
+                    rank = p.rank,
+                    tcode = p.tcode ?: "",
+                    tsname = p.tsname ?: "",
+                    winp = p.winp,
+                    win = p.win,
+                    lost = p.lost,
+                    swin = p.swin,
+                    slost = p.slost,
+                    point = p.point,
+                    lpoint = p.lpoint,
+                    con = p.con ?: ""
+                )
+            } ?: emptyList()
+
+            val womenEntities = womenResponse.payload?.map { p ->
+                TeamRankEntity(
+                    leagueCode = leagueCode,
+                    gender = "2",
+                    rank = p.rank,
+                    tcode = p.tcode ?: "",
+                    tsname = p.tsname ?: "",
+                    winp = p.winp,
+                    win = p.win,
+                    lost = p.lost,
+                    swin = p.swin,
+                    slost = p.slost,
+                    point = p.point,
+                    lpoint = p.lpoint,
+                    con = p.con ?: ""
+                )
+            } ?: emptyList()
+
+            dao.deleteTeamRanksByLeague(leagueCode)
+            dao.insertTeamRanks(womenEntities + menEntities)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override fun getTeamRanksFlow(leagueCode: String): Flow<List<TeamRank>> {
+        return dao.getTeamRanksFlow(leagueCode).map { entities ->
+            val teams = dao.getTeams().associateBy { it.code }
+            entities.map { entity ->
+                val team = teams[entity.tcode]
+                val teamName = team?.name ?: entity.tsname
+                val teamShortName = toDisplayTeamName(entity.tsname, team)
+                val teamColor = team?.primaryColor ?: getTeamColorHex(teamName.ifBlank { entity.tsname })
+
+                val setRatioStr = calculateRatio(entity.swin.toDouble(), entity.slost.toDouble())
+                val scoreRatioStr = calculateRatio(entity.point.toDouble(), entity.lpoint.toDouble())
+
+                TeamRank(
+                    rank = entity.rank,
+                    teamCode = entity.tcode,
+                    teamName = teamName,
+                    teamShortName = teamShortName,
+                    teamColor = teamColor,
+                    points = entity.winp,
+                    wins = entity.win,
+                    losses = entity.lost,
+                    setsWon = entity.swin,
+                    setsLost = entity.slost,
+                    setRatio = setRatioStr,
+                    scorePoints = entity.point,
+                    scoreConceded = entity.lpoint,
+                    scoreRatio = scoreRatioStr,
+                    streak = entity.con,
+                    leagueCode = entity.leagueCode,
+                    isMen = entity.gender == "1"
+                )
+            }
+        }
+    }
+
+    private fun calculateRatio(won: Double, lost: Double): String {
+        return if (lost > 0) {
+            String.format(java.util.Locale.US, "%.2f", won / lost)
+        } else if (won > 0) {
+            "MAX"
+        } else {
+            "0.00"
+        }
+    }
+
+    private fun toDisplayTeamName(tsname: String, teamEntity: TeamEntity?): String {
+        val fullName = if (teamEntity != null && teamEntity.shortName.isNotBlank()) teamEntity.shortName else tsname
+        return fullName.toCustomShortName()
+    }
+
     private fun getTeamColorHex(teamName: String, apiColor: String? = null): String {
         if (apiColor != null && apiColor.startsWith("#")) {
             return apiColor
         }
         return when {
-            teamName.contains("대한항공") -> "#051766"
-            teamName.contains("현대캐피탈") -> "#0082ca"
-            teamName.contains("우리카드") || teamName.contains("우리WON") -> "#0055a5"
+            teamName.contains("대한항공") || teamName.contains("KOREAN AIR") -> "#051766"
+            teamName.contains("현대캐피탈") || teamName.contains("HYUNDAI CAPITAL") -> "#0082ca"
+            teamName.contains("우리카드") || teamName.contains("우리WON") || teamName.contains("WOORICARD") -> "#0055a5"
             teamName.contains("KB") -> "#e5a100"
-            teamName.contains("한국전력") -> "#002d62"
+            teamName.contains("한국전력") || teamName.contains("KEPCO") -> "#002d62"
             teamName.contains("OK") -> "#ff6600"
-            teamName.contains("삼성화재") -> "#004b97"
-            teamName.contains("흥국생명") -> "#c408a1"
-            teamName.contains("IBK") -> "#0055a5"
-            teamName.contains("정관장") -> "#d91833"
+            teamName.contains("삼성화재") || teamName.contains("SAMSUNG") -> "#004b97"
+            teamName.contains("흥국생명") || teamName.contains("HEUNGKUK") -> "#c408a1"
+            teamName.contains("IBK") || teamName.contains("INDUSTRIAL BANK") -> "#0055a5"
+            teamName.contains("정관장") || teamName.contains("JUNG KWAN JANG") -> "#d91833"
             teamName.contains("SOOP") -> "#0545b1"
-            teamName.contains("도로공사") || teamName.contains("하이패스") -> "#081855"
+            teamName.contains("도로공사") || teamName.contains("하이패스") || teamName.contains("KOREA EXPRESSWAY") -> "#081855"
             teamName.contains("GS") -> "#0b91a7"
-            teamName.contains("현대건설") -> "#17193e"
+            teamName.contains("현대건설") || teamName.contains("HYUNDAI E&C") -> "#17193e"
             else -> "#333333"
         }
     }
 
     private fun String.toCustomShortName(): String {
         return when {
-            contains("대한항공") -> "항공"
-            contains("현대캐피탈") -> "현캐"
-            contains("우리카드") || contains("우리WON") -> "우리"
+            contains("대한항공") || contains("KOREAN AIR") -> "항공"
+            contains("현대캐피탈") || contains("HYUNDAI CAPITAL") -> "현캐"
+            contains("우리카드") || contains("우리WON") || contains("WOORICARD") -> "우리"
             contains("KB") -> "KB"
-            contains("한국전력") -> "한전"
+            contains("한국전력") || contains("KEPCO") -> "한전"
             contains("OK") -> "OK"
-            contains("삼성화재") -> "삼성"
-            contains("흥국생명") -> "흥국"
-            contains("IBK") -> "IBK"
-            contains("정관장") -> "홍삼"
+            contains("삼성화재") || contains("SAMSUNG") -> "삼성"
+            contains("흥국생명") || contains("HEUNGKUK") -> "흥국"
+            contains("IBK") || contains("INDUSTRIAL BANK") -> "IBK"
+            contains("정관장") || contains("JUNG KWAN JANG") -> "홍삼"
             contains("SOOP") -> "숲"
-            contains("도로공사") || contains("하이패스") -> "도공"
+            contains("도로공사") || contains("하이패스") || contains("KOREA EXPRESSWAY") -> "도공"
             contains("GS") -> "GS"
-            contains("현대건설") -> "현건"
+            contains("현대건설") || contains("HYUNDAI E&C") -> "현건"
             else -> this
         }
     }
 }
+

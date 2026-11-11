@@ -13,6 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -108,10 +109,18 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun syncData() {
+    fun syncData(context: Context? = null) {
         viewModelScope.launch {
             repository.fetchAndSaveTeams()
             repository.fetchAndSaveSchedules()
+            if (context != null) {
+                val schedules = repository.getSchedulesFlow().first()
+                com.example.todayvolleyball.worker.SyncWorker.checkAndNotifyFinishedMatches(
+                    context.applicationContext,
+                    schedules,
+                    settingsDataStore
+                )
+            }
         }
     }
 }
